@@ -77,16 +77,16 @@ namespace ClassLibrary
         /// <returns>Новое состояние-кандидат</returns>
         public static int[] GenerateStateCandidate(int[] previousState)
         {
-            int a; //Левая граница текущего состояния для последующего инвертирования.
-            int b; //Правая граница текущего состояния для последующего инвертирования.
+            int previousStateLength = previousState.Length;
+
+            if (previousStateLength < 2)
+            {
+                throw new Exception("Длина массива (" + previousStateLength + ") меньше 2 - невозможно получить новое состояние-кандидат путём инвертирования.");
+            }
 
             //Получение случайных границ a и b, при условии, что a должно быть меньше b.
-            do
-            {
-                a = random.Next(0, previousState.Length);
-                b = random.Next(0, previousState.Length);
-            }
-            while (a >= b);
+            int a = random.Next(0, previousStateLength - 1); //Левая граница текущего состояния для последующего инвертирования.
+            int b = random.Next(a + 1, previousStateLength); //Правая граница текущего состояния для последующего инвертирования.
 
             return Reverse(previousState, a, b).ToArray();
         }
@@ -146,6 +146,18 @@ namespace ClassLibrary
             return stateEnergy;
         }
 
+        private static int GetFactorial(int N)
+        {
+            int factorial = 1;
+
+            for (int i = 2; i <= N; i++)
+            {
+                factorial *= i;
+            }
+
+            return factorial;
+        }
+
         /// <summary>
         /// Поиск оптимального состояния методом имитации отжига.
         /// </summary>
@@ -162,15 +174,36 @@ namespace ClassLibrary
             int[] state = new int[energy.GetLength(0)];
             int[] stateCandidate;
 
+            int maxIterationsNumber;
             int candidateEnergy;
+            int i = 0;
 
             GenerateNonrepeatingNumberSequence(state);
 
             currentEnergy = CalculateEnergy(state, energy);
 
+            switch (state.Length)
+            {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    maxIterationsNumber = GetFactorial(state.Length);
+
+                    break;
+                case 5:
+                case 6:
+                    maxIterationsNumber = 100;
+
+                    break;
+                default:
+                    maxIterationsNumber = GetFactorial(state.Length) / 10 * 9;
+
+                    break;
+            }
+            
             //Ограничение количества итераций
-            //(на всякий случай, для тестирования сложных функций изменения температуры)
-            for (int i = 0; i < 100000; i++)
+            for (; i < maxIterationsNumber; i++)
             {
                 stateCandidate = GenerateStateCandidate(state);
                 candidateEnergy = CalculateEnergy(stateCandidate, energy);
@@ -202,6 +235,8 @@ namespace ClassLibrary
                     break;
                 }
             }
+
+            Console.WriteLine("Количество итераций: " + i + ".\n"); //Просто чтобы посмотреть количество итераций.
 
             return state;
         }

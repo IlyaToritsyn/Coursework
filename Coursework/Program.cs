@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Reflection;
 using ClassLibrary;
 
 namespace Coursework
 {
     public class MyClass
     {
+
         /// <summary>
         /// Вывод элементов массива в консоль.
         /// </summary>
@@ -33,13 +37,17 @@ namespace Coursework
             //Если есть лишняя строка.
             if (i == array.GetLength(1))
             {
-                throw new Exception("\nОшибка: матрица не квадратная.");
+                Console.WriteLine();
+
+                throw new Exception("Ошибка: матрица не квадратная.");
             }
 
             //Если длина строки отличается от длины 1 строки.
             else if (str.Length != array.GetLength(1))
             {
-                throw new Exception("\nОшибка: количество элементов в строках не совпадает.");
+                Console.WriteLine();
+
+                throw new Exception("Ошибка: количество элементов в строках не совпадает.");
             }
 
             //Обработка элеметов строки и занесение их в массив с графами.
@@ -49,14 +57,18 @@ namespace Coursework
 
                 if (current < 0)
                 {
-                    throw new Exception("\nОшибка: отрицательное число.");
+                    Console.WriteLine();
+
+                    throw new Exception("Ошибка: отрицательное число.");
                 }
 
                 if (j == i)
                 {
                     if (current != 0)
                     {
-                        throw new Exception("\nОшибка: элемент главной диагонали не равен 0.");
+                        Console.WriteLine();
+
+                        throw new Exception("Ошибка: элемент главной диагонали не равен 0.");
                     }
                 }
 
@@ -64,14 +76,18 @@ namespace Coursework
                 {
                     if (current == 0)
                     {
-                        throw new Exception("\nОшибка: элемент вне главной диагонали равен 0.");
+                        Console.WriteLine();
+
+                        throw new Exception("Ошибка: элемент вне главной диагонали равен 0.");
                     }
 
                     if (j < i)
                     {
                         if (current != array[j, i])
                         {
-                            throw new Exception("\nОшибка: матрица несимметрична.");
+                            Console.WriteLine();
+
+                            throw new Exception("Ошибка: матрица несимметрична.");
                         }
                     }
                 }
@@ -79,88 +95,193 @@ namespace Coursework
                 array[i, j] = current;
             }
         }
+
+        public static void GetTxtFiles(string directoryPath, out List<string> txtFiles)
+        {
+            txtFiles = new List<string>();
+
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            string[] files = Directory.GetFiles(directoryPath);
+
+            if (files != null)
+            {
+                for (int i = 0; i < files.Length; i++)
+                {
+                    FileInfo fileInfo = new FileInfo(files[i]);
+                    if (fileInfo.Extension == ".txt")
+                    {
+                        txtFiles.Add(fileInfo.Name);
+                    }
+                }
+            }
+
+            if (txtFiles.Count == 0)
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+
+                throw new Exception("В папке с матрицами смежности, находящейся по пути:\n\t" + directoryInfo.FullName + " -\nнет ни одного файла с расширением .txt.");
+            }
+        }
+
+        /// <summary>
+        /// Ввод целого числа с клавиатуры.
+        /// </summary>
+        /// <param name="message">Сообщение для ввода</param>
+        /// <returns>Целое число, введённое с клавиатуры</returns>
+        public static int InputInteger(string message)
+        {
+            bool isParsed = false;
+
+            int N = 0;
+
+            while (!isParsed)
+            {
+                Console.WriteLine(message);
+
+                isParsed = int.TryParse(Console.ReadLine(), out N);
+
+                Console.WriteLine();
+            }
+
+            return N;
+        }
     }
 
     class Program
     {
         static void Main()
         {
-            int[,] edgeMatrix = null;
-
-            try
+            while (true)
             {
-                using (StreamReader reader = new StreamReader(@"Matrix.txt"))
+                int[,] edgeMatrix = null;
+
+                string directoryPath = @".\Texts\";
+                string selectedFile;
+
+                int fileNumber;
+
+                try
                 {
-                    string str; //Текущая строка файла.
-                    string[] temp; //Временный массив для элементов текущей строки.
-                    int i = 0; //Счётчик считанных строк.
+                    MyClass.GetTxtFiles(directoryPath, out List<string> txtFiles);
 
-                    Console.WriteLine("Считываю граф...\n");
+                    Console.WriteLine("Список доступных файлов:");
 
-                    while ((str = reader.ReadLine()) != null)
+                    foreach (string file in txtFiles)
                     {
-                        temp = str.Split(new char[] { ' ', '-' }, StringSplitOptions.RemoveEmptyEntries);
-
-                        //Если строка пустая, то пропускаем её.
-                        if (temp.Length == 0)
-                        {
-                            continue;
-                        }
-
-                        MyClass.Output(temp);
-
-                        //Создаём двумерный массив для графов, основываясь на длине 1 строки.
-                        if (edgeMatrix == null)
-                        {
-                            edgeMatrix = new int[temp.Length, temp.Length];
-                        }
-
-                        MyClass.ReadGraphs(edgeMatrix, temp, i); //Обрабатываем строку с данными, и если всё хорошо, то заносим их в массив.
-
-                        i++; //Ещё одна строка обработана.
+                        Console.WriteLine((txtFiles.IndexOf(file) + 1) + ". " + file);
                     }
 
-                    if (i != edgeMatrix.GetLength(0))
+                    Console.WriteLine();
+
+                    fileNumber = MyClass.InputInteger("Введите номер нужного файла или 0, чтобы обновить список:");
+
+                    if (fileNumber == 0)
                     {
-                        throw new Exception("\nОшибка: матрица не квадратная.");
+                        continue;
                     }
+
+                    try
+                    {
+                        if ((fileNumber < 1) || (fileNumber > txtFiles.Count))
+                        {
+                            throw new Exception("Введён неверный номер файла: " + fileNumber + ".");
+                        }
+                    }
+
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message + "\n");
+
+                        continue;
+                    }
+
+                    selectedFile = txtFiles[fileNumber - 1];
+
+                    Console.WriteLine("Выбран файл: " + selectedFile + "\n");
+
+                    using (StreamReader reader = new StreamReader(directoryPath + selectedFile))
+                    {
+                        string str; //Текущая строка файла.
+                        string[] temp; //Временный массив для элементов текущей строки.
+                        int i = 0; //Счётчик считанных строк.
+
+                        Console.WriteLine("Считываю граф...\n");
+
+                        while ((str = reader.ReadLine()) != null)
+                        {
+                            temp = str.Split(new char[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                            //Если строка пустая, то пропускаем её.
+                            if (temp.Length == 0)
+                            {
+                                continue;
+                            }
+
+                            MyClass.Output(temp);
+
+                            //Создаём двумерный массив для графов, основываясь на длине 1 строки.
+                            if (edgeMatrix == null)
+                            {
+                                edgeMatrix = new int[temp.Length, temp.Length];
+                            }
+
+                            MyClass.ReadGraphs(edgeMatrix, temp, i); //Обрабатываем строку с данными, и если всё хорошо, то заносим их в массив.
+
+                            i++; //Ещё одна строка обработана.
+                        }
+
+                        if (i != edgeMatrix.GetLength(0))
+                        {
+                            throw new Exception("Ошибка: матрица не квадратная.\n");
+                        }
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine("Граф успешно считан.\n");
+                    Console.WriteLine("Ищу оптимальное решение задачи коммивояжёра...\n");
+
+                    int[] answer = SimulatedAnnealingClass.SimulateAnnealing(edgeMatrix, 10, 0.00001, out int resultEnergy);
+
+                    Console.WriteLine("Более-менее оптимальное решение:");
+
+                    MyClass.Output(answer);
+
+                    Console.WriteLine();
+                    Console.WriteLine("Расстояние: " + resultEnergy + ".\n");
                 }
 
-                Console.WriteLine("\nГраф успешно считан.\n");
-                Console.WriteLine("Ищу оптимальное решение задачи коммивояжёра...\n");
+                catch (FormatException)
+                {
+                    Console.WriteLine("Ошибка: неверный формат данных.\n");
+                }
 
-                int[] answer = SimulatedAnnealingClass.SimulateAnnealing(edgeMatrix, 10, 0.00001, out int resultEnergy);
+                catch (OverflowException)
+                {
+                    Console.WriteLine("Ошибка: отрицательное число.\n");
+                }
 
-                Console.WriteLine("Более-менее оптимальное решение:");
+                catch (IndexOutOfRangeException)
+                {
+                    Console.WriteLine("Ошибка: матрица не квадратная.\n");
+                }
 
-                MyClass.Output(answer);
+                catch (NullReferenceException)
+                {
+                    Console.WriteLine("Ошибка: файл с графами пуст.\n");
+                }
 
-                Console.WriteLine("\nРасстояние: " + resultEnergy + ".");
-            }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message + "\n");
+                }
 
-            catch (FormatException)
-            {
-                Console.WriteLine("\nОшибка: неверный формат данных.");
-            }
+                Console.WriteLine("Нажмите любую клавишу, чтобы запустить программу заново.\n");
 
-            catch (OverflowException)
-            {
-                Console.WriteLine("\nОшибка: отрицательное число.");
-            }
-
-            catch (IndexOutOfRangeException)
-            {
-                Console.WriteLine("\nОшибка: матрица не квадратная.");
-            }
-
-            catch (NullReferenceException)
-            {
-                Console.WriteLine("\nОшибка: файл с графами пуст.");
-            }
-
-            catch (Exception e)
-            {
-                Console.WriteLine("\n" + e.Message);
+                Console.ReadKey(true);
             }
         }
     }
