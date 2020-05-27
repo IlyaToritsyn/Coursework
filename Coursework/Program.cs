@@ -213,12 +213,17 @@ namespace Coursework
 
                         while ((str = reader.ReadLine()) != null)
                         {
-                            temp = str.Split(new char[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                            temp = str.Split(new char[] { ' ', ',', ';', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
                             //Если строка пустая, то пропускаем её.
                             if (temp.Length == 0)
                             {
                                 continue;
+                            }
+
+                            else if ((temp.Length == 1) && (i == 0))
+                            {
+                                    throw new Exception("Ошибка: в матрице смежности " + selectedFile + " только 1 значение.");
                             }
 
                             MyClass.Output(temp);

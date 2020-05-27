@@ -197,7 +197,7 @@ namespace ClassLibrary
 
                     break;
                 default:
-                    maxIterationsNumber = GetFactorial(state.Length) / 10 * 9;
+                    maxIterationsNumber = GetFactorial(state.Length) / 10;
 
                     break;
             }
